@@ -1,0 +1,38 @@
+yaml
+name: Calcul Hebdomadaire du Pool NHL
+
+on:
+  schedule:
+    # S'exécute tous les lundis à 10:00 UTC (soit 6h00 du matin au Québec)
+    - cron: '0 10 * * 1'
+  workflow_dispatch: # Permet de lancer le calcul manuellement quand vous voulez
+
+jobs:
+  calculer_points:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Donne le droit au robot de modifier vos fichiers
+
+    steps:
+    - name: Récupérer le code du projet
+      uses: actions/checkout@v3
+
+    - name: Installer Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Installer les bibliothèques requises
+      run: |
+        pip install requests pandas
+
+    - name: Exécuter le script de calcul
+      run: python calcul_pool.py
+
+    - name: Sauvegarder les nouveaux points sur GitHub
+      run: |
+        git config --global user.name "Robot Pool NHL"
+        git config --global user.email "actions@github.com"
+        git add historique_scores.md
+        git commit -m "Mise à jour automatique des scores du pool" || echo "Aucun changement"
+        git push
